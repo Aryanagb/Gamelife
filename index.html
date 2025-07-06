@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Enhanced Tic‑Tac‑Toe</title>
+  <style>
+    body {
+      background: #222;
+      color: #eee;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      text-align: center;
+      padding: 20px 10px 10px;
+    }
+
+    .intro {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      background: #333;
+      padding: 10px;
+      border-radius: 8px;
+      margin: 10px auto;
+      max-width: 500px;
+    }
+
+    .intro label, .intro button {
+      color: #eee;
+      font-size: 1rem;
+    }
+
+    select, button {
+      padding: 8px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+    }
+
+    .board {
+      display: grid;
+      margin: 20px auto;
+      gap: 6px;
+      width: fit-content;
+    }
+
+    .cell {
+      width: 64px;
+      height: 64px;
+      background: #444;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      border-radius: 5px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .cell.win-green {
+      background: limegreen;
+      animation: pulse 0.6s infinite alternate;
+    }
+
+    .cell.win-red {
+      background: crimson;
+      animation: pulse 0.6s infinite alternate;
+    }
+
+    .loser {
+      animation: shake 0.4s;
+    }
+
+    @keyframes pulse {
+      to { transform: scale(1.1); }
+    }
+
+    @keyframes shake {
+      0%,100%{transform:translateX(0);}
+      20%,80%{transform:translateX(-10px);}
+      40%,60%{transform:translateX(10px);}
+    }
+
+    #status {
+      text-align: center;
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Enhanced Tic‑Tac‑Toe</h1>
+    <div class="intro">
+      <label>Board size:
+        <select id="size">
+          <option>3</option>
+          <option>5</option>
+          <option>6</option>
+          <option>7</option>
+        </select>
+      </label>
+      <label>Difficulty:
+        <select id="level">
+          <option value="easy">Easy</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </label>
+      <button id="start">🎮 Start Game</button>
+    </div>
+  </header>
+
+  <div id="board" class="board"></div>
+  <div id="status">Select settings and start the game!</div>
+
+  <!-- Sound effects -->
+  <audio id="moveSound" src="https://freesound.org/data/previews/341/341695_6263678-lq.mp3"></audio>
+  <audio id="winSound" src="https://freesound.org/data/previews/341/341697_6263678-lq.mp3"></audio>
+  <audio id="loseSound" src="https://freesound.org/data/previews/341/341693_6263678-lq.mp3"></audio>
+  <audio id="drawSound" src="https://freesound.org/data/previews/341/341691_6263678-lq.mp3"></audio>
+
+  <script>
+    let size, level, cells, boardState, gameActive;
+
+    const boardEl = document.getElementById('board');
+    const status = document.getElementById('status');
+    const moveS = document.getElementById('moveSound');
+    const winS = document.getElementById('winSound');
+    const loseS = document.getElementById('loseSound');
+    const drawS = document.getElementById('drawSound');
+
+    document.getElementById('start').onclick = () => {
+      size = +document.getElementById('size').value;
+      level = document.getElementById('level').value;
+      initGame();
+    };
+
+    function initGame() {
+      boardState = Array(size * size).fill('');
+      gameActive = true;
+      boardEl.style.gridTemplate = `repeat(${size},1fr)/repeat(${size},1fr)`;
+      boardEl.innerHTML = '';
+      for (let i = 0; i < size * size; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.i = i;
+        cell.onclick = () => playerMove(i);
+        boardEl.appendChild(cell);
+      }
+      cells = Array.from(boardEl.children);
+      status.textContent = "Your turn (X)";
+    }
+
+    function playerMove(i) {
+      if (!gameActive || boardState[i]) return;
+      boardState[i] = 'X'; updateCell(i, 'X');
+      moveS.play().catch(() => {});
+      if (checkResult('X')) return;
+      status.textContent = "Bot thinking...";
+      setTimeout(botMove, level === 'easy' ? 100 : level === 'medium' ? 400 : 0);
+    }
+
+    function botMove() {
+      const move = level === 'easy' ? randomMove() : minimaxMove(boardState.slice());
+      if (move == null) return;
+      boardState[move] = 'O'; updateCell(move, 'O');
+      moveS.play().catch(() => {});
+      checkResult('O');
+      if (gameActive) status.textContent = "Your turn (X)";
+    }
+
+    function randomMove() {
+      const empties = boardState.map((v, i) => v ? '' : i).filter(v => v !== '');
+      return empties.length ? empties[Math.floor(Math.random() * empties.length)] : null;
+    }
+
+    function updateCell(i, p) {
+      cells[i].textContent = p;
+    }
+
+    function checkResult(p) {
+      const lines = getWinLines();
+      for (const [a, b, c] of lines) {
+        if (boardState[a] === p && boardState[b] === p && boardState[c] === p) {
+          gameActive = false;
+          highlightWin([a, b, c], p);
+          return true;
+        }
+      }
+      if (!boardState.includes('')) {
+        gameActive = false;
+        status.textContent = "It's a draw!";
+        drawS.play().catch(() => {});
+        return true;
+      }
+      return false;
+    }
+
+    function highlightWin(line, p) {
+      const winClass = p === 'X' ? 'win-green' : 'win-red';
+      line.forEach(i => cells[i].classList.add(winClass));
+      cells.forEach((c, i) => {
+        if (!line.includes(i) && boardState[i]) c.classList.add('loser');
+      });
+      status.textContent = p === 'X' ? "🎉 You win!" : "😞 Bot wins!";
+      (p === 'X' ? winS : loseS).play().catch(() => {});
+    }
+
+    function getWinLines() {
+      const L = [];
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size - 2; c++) {
+          L.push([r * size + c, r * size + c + 1, r * size + c + 2]);
+        }
+      }
+      for (let c = 0; c < size; c++) {
+        for (let r = 0; r < size - 2; r++) {
+          L.push([r * size + c, (r + 1) * size + c, (r + 2) * size + c]);
+        }
+      }
+      for (let r = 0; r < size - 2; r++) {
+        for (let c = 0; c < size - 2; c++) {
+          L.push([r * size + c, (r + 1) * size + c + 1, (r + 2) * size + c + 2]);
+          L.push([(r + 2) * size + c, (r + 1) * size + c + 1, r * size + c + 2]);
+        }
+      }
+      return L;
+    }
+
+    function minimaxMove(board) {
+      const res = minimax(board, 'O', 0);
+      return res.index;
+    }
+
+    function minimax(board, player, depth) {
+      const opp = player === 'O' ? 'X' : 'O';
+      if (checkStaticWin(board, 'O')) return { score: 10 - depth };
+      if (checkStaticWin(board, 'X')) return { score: depth - 10 };
+      if (!board.includes('')) return { score: 0 };
+      const moves = [];
+      board.forEach((v, i) => {
+        if (!v) {
+          const b2 = board.slice();
+          b2[i] = player;
+          const r = minimax(b2, opp, depth + 1);
+          moves.push({ index: i, score: r.score });
+        }
+      });
+      return player === 'O'
+        ? moves.reduce((a, b) => b.score > a.score ? b : a)
+        : moves.reduce((a, b) => b.score < a.score ? b : a);
+    }
+
+    function checkStaticWin(b, p) {
+      return getWinLines().some(([a, b1, c]) => b[a] === p && b[b1] === p && b[c] === p);
+    }
+  </script>
+</body>
+</html>
