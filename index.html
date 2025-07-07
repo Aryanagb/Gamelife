@@ -3,270 +3,281 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Enhanced Tic‑Tac‑Toe</title>
+  <title>GameLife Arcade</title>
   <style>
-    body {
-      background: #222;
-      color: #eee;
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-
+    body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #111; color: #eee; }
     header {
-      text-align: center;
-      padding: 20px 10px 10px;
+      background: #222; padding: 10px; text-align: center; font-size: 1.4rem;
+      font-weight: bold; color: #00f7ff; box-shadow: 0 2px 10px #000;
+    }
+    #intro-screen {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: #000d1a; color: #00f7ff;
+      display: flex; justify-content: center; align-items: center; flex-direction: column;
+      z-index: 1000; font-size: 2rem;
+    }
+    #intro-screen button {
+      margin-top: 20px; padding: 10px 20px; font-size: 1.2rem;
+      background: #00f7ff; color: #000; border: none; border-radius: 10px; cursor: pointer;
+    }
+    main { display: none; text-align: center; padding: 20px; }
+
+    .game-buttons {
+      margin-top: 15px;
+      display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;
     }
 
-    .intro {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      background: #333;
-      padding: 10px;
-      border-radius: 8px;
-      margin: 10px auto;
-      max-width: 500px;
+    .game-buttons button {
+      padding: 8px 14px; font-size: 0.9rem;
+      background: #333; color: #fff; border: none; border-radius: 6px;
+      cursor: pointer; transition: 0.3s;
     }
 
-    .intro label, .intro button {
-      color: #eee;
-      font-size: 1rem;
+    .game-buttons button:hover {
+      background: #00f7ff; color: #000;
     }
 
-    select, button {
-      padding: 8px;
-      font-size: 1rem;
-      border: none;
-      border-radius: 5px;
+    section { display: none; margin-top: 20px; animation: fadeIn 0.5s; font-size: 0.95rem; }
+
+    .emoji-face {
+      font-size: 3rem; text-align: center; transition: transform 0.3s ease;
     }
 
-    button {
-      background-color: #4CAF50;
-      color: white;
-      cursor: pointer;
+    .rps-buttons {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+      justify-content: center; max-width: 250px; margin: 20px auto;
     }
+
+    .rps-buttons button {
+      padding: 10px; font-size: 1.1rem; border-radius: 5px;
+      background: #333; color: #fff; border: none; cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .rps-buttons button:hover { background: #00f7ff; color: #000; }
+    .rps-buttons .full { grid-column: span 2; }
 
     .board {
-      display: grid;
-      margin: 20px auto;
-      gap: 6px;
-      width: fit-content;
+      display: grid; grid-template-columns: repeat(3, 80px); gap: 5px;
+      justify-content: center; margin: 20px auto;
     }
 
     .cell {
-      width: 64px;
-      height: 64px;
-      background: #444;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      border-radius: 5px;
+      width: 80px; height: 80px; background: #333; font-size: 2rem;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 5px; cursor: pointer;
+    }
+
+    .glow-x { background: #0f0 !important; box-shadow: 0 0 10px #0f0, 0 0 20px #0f0; }
+    .glow-o { background: #f00 !important; box-shadow: 0 0 10px #f00, 0 0 20px #f00; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    #ad-container {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      width: 160px;
+      height: 300px;
+      z-index: 999;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 0 10px #00f7ff88;
+    }
+    #rotate-ad-btn {
+      position: fixed;
+      bottom: 320px;
+      right: 10px;
+      z-index: 1000;
+      padding: 5px 10px;
+      font-size: 0.8rem;
+      background: #00f7ff; color: #000; border: none; border-radius: 5px;
       cursor: pointer;
-      position: relative;
-    }
-
-    .cell.win-green {
-      background: limegreen;
-      animation: pulse 0.6s infinite alternate;
-    }
-
-    .cell.win-red {
-      background: crimson;
-      animation: pulse 0.6s infinite alternate;
-    }
-
-    .loser {
-      animation: shake 0.4s;
-    }
-
-    @keyframes pulse {
-      to { transform: scale(1.1); }
-    }
-
-    @keyframes shake {
-      0%,100%{transform:translateX(0);}
-      20%,80%{transform:translateX(-10px);}
-      40%,60%{transform:translateX(10px);}
-    }
-
-    #status {
-      text-align: center;
-      font-size: 1.2rem;
-      margin-bottom: 20px;
     }
   </style>
 </head>
 <body>
+<div id="intro-screen">
+  <div>✨ Welcome to GameLife ✨</div>
+  <button onclick="startApp()">Start Game</button>
+</div>
 
-  <header>
-    <h1>Enhanced Tic‑Tac‑Toe</h1>
-    <div class="intro">
-      <label>Board size:
-        <select id="size">
-          <option>3</option>
-          <option>5</option>
-          <option>6</option>
-          <option>7</option>
-        </select>
-      </label>
-      <label>Difficulty:
-        <select id="level">
-          <option value="easy">Easy</option>
-          <option value="medium">Medium</option>
-          <option value="hard">Hard</option>
-        </select>
-      </label>
-      <button id="start">🎮 Start Game</button>
+<header>🎮 Welcome to GameLife</header>
+
+<main>
+  <div class="game-buttons">
+    <button onclick="showGame('rps')">🪨 Rock Paper Scissors</button>
+    <button onclick="showGame('ttt')">❌ Tic Tac Toe</button>
+  </div>
+
+  <!-- RPS Section -->
+  <section id="rps">
+    <h2>Rock Paper Scissors</h2>
+    <div id="bot-emoji" class="emoji-face">🤖</div>
+    <p id="rps-intro">You're about to challenge our AI bot. Make your move!</p>
+    <div class="rps-buttons">
+      <button onclick="playRPS('rock')">🪨 Rock</button>
+      <button onclick="playRPS('paper')">📄 Paper</button>
+      <button class="full" onclick="playRPS('scissors')">✂️ Scissors</button>
     </div>
-  </header>
+    <p id="rps-result"></p>
+    <div id="rps-score" style="text-align:center; margin-top:10px;"></div>
+  </section>
 
-  <div id="board" class="board"></div>
-  <div id="status">Select settings and start the game!</div>
+  <!-- Tic Tac Toe Section -->
+  <section id="ttt">
+    <h2>Tic Tac Toe</h2>
+    <label>Bot Level:
+      <select id="botLevel">
+        <option value="easy">Easy</option>
+        <option value="medium">Medium</option>
+        <option value="hard">Hard</option>
+      </select>
+    </label>
+    <div class="board" id="ttt-board"></div>
+    <p id="ttt-status"></p>
+  </section>
+</main>
 
-  <!-- Sound effects -->
-  <audio id="moveSound" src="https://freesound.org/data/previews/341/341695_6263678-lq.mp3"></audio>
-  <audio id="winSound" src="https://freesound.org/data/previews/341/341697_6263678-lq.mp3"></audio>
-  <audio id="loseSound" src="https://freesound.org/data/previews/341/341693_6263678-lq.mp3"></audio>
-  <audio id="drawSound" src="https://freesound.org/data/previews/341/341691_6263678-lq.mp3"></audio>
+<!-- Ad Rotate Button -->
+<button id="rotate-ad-btn" onclick="rotateAd()">🔁 Rotate Ad</button>
 
-  <script>
-    let size, level, cells, boardState, gameActive;
-
-    const boardEl = document.getElementById('board');
-    const status = document.getElementById('status');
-    const moveS = document.getElementById('moveSound');
-    const winS = document.getElementById('winSound');
-    const loseS = document.getElementById('loseSound');
-    const drawS = document.getElementById('drawSound');
-
-    document.getElementById('start').onclick = () => {
-      size = +document.getElementById('size').value;
-      level = document.getElementById('level').value;
-      initGame();
+<!-- Ad Container -->
+<div id="ad-container">
+  <script type="text/javascript">
+    atOptions = {
+      'key' : 'd58bfc795dcf19c2b28cfe9fd617715f',
+      'format' : 'iframe',
+      'height' : 300,
+      'width' : 160,
+      'params' : {}
     };
-
-    function initGame() {
-      boardState = Array(size * size).fill('');
-      gameActive = true;
-      boardEl.style.gridTemplate = `repeat(${size},1fr)/repeat(${size},1fr)`;
-      boardEl.innerHTML = '';
-      for (let i = 0; i < size * size; i++) {
-        const cell = document.createElement('div');
-        cell.className = 'cell';
-        cell.dataset.i = i;
-        cell.onclick = () => playerMove(i);
-        boardEl.appendChild(cell);
-      }
-      cells = Array.from(boardEl.children);
-      status.textContent = "Your turn (X)";
-    }
-
-    function playerMove(i) {
-      if (!gameActive || boardState[i]) return;
-      boardState[i] = 'X'; updateCell(i, 'X');
-      moveS.play().catch(() => {});
-      if (checkResult('X')) return;
-      status.textContent = "Bot thinking...";
-      setTimeout(botMove, level === 'easy' ? 100 : level === 'medium' ? 400 : 0);
-    }
-
-    function botMove() {
-      const move = level === 'easy' ? randomMove() : minimaxMove(boardState.slice());
-      if (move == null) return;
-      boardState[move] = 'O'; updateCell(move, 'O');
-      moveS.play().catch(() => {});
-      checkResult('O');
-      if (gameActive) status.textContent = "Your turn (X)";
-    }
-
-    function randomMove() {
-      const empties = boardState.map((v, i) => v ? '' : i).filter(v => v !== '');
-      return empties.length ? empties[Math.floor(Math.random() * empties.length)] : null;
-    }
-
-    function updateCell(i, p) {
-      cells[i].textContent = p;
-    }
-
-    function checkResult(p) {
-      const lines = getWinLines();
-      for (const [a, b, c] of lines) {
-        if (boardState[a] === p && boardState[b] === p && boardState[c] === p) {
-          gameActive = false;
-          highlightWin([a, b, c], p);
-          return true;
-        }
-      }
-      if (!boardState.includes('')) {
-        gameActive = false;
-        status.textContent = "It's a draw!";
-        drawS.play().catch(() => {});
-        return true;
-      }
-      return false;
-    }
-
-    function highlightWin(line, p) {
-      const winClass = p === 'X' ? 'win-green' : 'win-red';
-      line.forEach(i => cells[i].classList.add(winClass));
-      cells.forEach((c, i) => {
-        if (!line.includes(i) && boardState[i]) c.classList.add('loser');
-      });
-      status.textContent = p === 'X' ? "🎉 You win!" : "😞 Bot wins!";
-      (p === 'X' ? winS : loseS).play().catch(() => {});
-    }
-
-    function getWinLines() {
-      const L = [];
-      for (let r = 0; r < size; r++) {
-        for (let c = 0; c < size - 2; c++) {
-          L.push([r * size + c, r * size + c + 1, r * size + c + 2]);
-        }
-      }
-      for (let c = 0; c < size; c++) {
-        for (let r = 0; r < size - 2; r++) {
-          L.push([r * size + c, (r + 1) * size + c, (r + 2) * size + c]);
-        }
-      }
-      for (let r = 0; r < size - 2; r++) {
-        for (let c = 0; c < size - 2; c++) {
-          L.push([r * size + c, (r + 1) * size + c + 1, (r + 2) * size + c + 2]);
-          L.push([(r + 2) * size + c, (r + 1) * size + c + 1, r * size + c + 2]);
-        }
-      }
-      return L;
-    }
-
-    function minimaxMove(board) {
-      const res = minimax(board, 'O', 0);
-      return res.index;
-    }
-
-    function minimax(board, player, depth) {
-      const opp = player === 'O' ? 'X' : 'O';
-      if (checkStaticWin(board, 'O')) return { score: 10 - depth };
-      if (checkStaticWin(board, 'X')) return { score: depth - 10 };
-      if (!board.includes('')) return { score: 0 };
-      const moves = [];
-      board.forEach((v, i) => {
-        if (!v) {
-          const b2 = board.slice();
-          b2[i] = player;
-          const r = minimax(b2, opp, depth + 1);
-          moves.push({ index: i, score: r.score });
-        }
-      });
-      return player === 'O'
-        ? moves.reduce((a, b) => b.score > a.score ? b : a)
-        : moves.reduce((a, b) => b.score < a.score ? b : a);
-    }
-
-    function checkStaticWin(b, p) {
-      return getWinLines().some(([a, b1, c]) => b[a] === p && b[b1] === p && b[c] === p);
-    }
   </script>
+  <script type="text/javascript" src="//www.highperformanceformat.com/d58bfc795dcf19c2b28cfe9fd617715f/invoke.js"></script>
+</div>
+
+<script>
+function startApp() {
+  document.getElementById('intro-screen').style.display = 'none';
+  document.querySelector('main').style.display = 'block';
+  showGame('rps');
+  renderBoard();
+}
+function showGame(id) {
+  document.querySelectorAll('section').forEach(s => s.style.display = 'none');
+  document.getElementById(id).style.display = 'block';
+  if(id === 'ttt') resetTTT();
+}
+
+let rpsScore = { win: 0, lose: 0, draw: 0 };
+function playRPS(playerMove) {
+  const moves = ['rock','paper','scissors'];
+  const botMove = moves[Math.floor(Math.random()*3)];
+  const result = getRPSResult(playerMove, botMove);
+  document.getElementById('rps-result').textContent = `You: ${playerMove} | Bot: ${botMove} → ${result}`;
+  document.getElementById('bot-emoji').textContent = result === 'Win' ? '😁' : result === 'Lose' ? '😢' : '😐';
+  updateRPSScore(result);
+}
+function getRPSResult(p, b) {
+  if (p === b) return 'Draw';
+  if ((p==='rock' && b==='scissors') || (p==='scissors' && b==='paper') || (p==='paper' && b==='rock')) return 'Win';
+  return 'Lose';
+}
+function updateRPSScore(result) {
+  if (result === 'Win') rpsScore.win++;
+  else if (result === 'Lose') rpsScore.lose++;
+  else rpsScore.draw++;
+  document.getElementById('rps-score').textContent = `Wins: ${rpsScore.win} | Losses: ${rpsScore.lose} | Draws: ${rpsScore.draw}`;
+}
+
+let board = [], currentPlayer = 'X', tttActive = true;
+function renderBoard() {
+  const boardEl = document.getElementById('ttt-board');
+  boardEl.innerHTML = '';
+  board.forEach((val, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.textContent = val;
+    cell.onclick = () => makeMove(i);
+    boardEl.appendChild(cell);
+  });
+}
+function resetTTT() {
+  board = Array(9).fill('');
+  currentPlayer = 'X';
+  tttActive = true;
+  document.getElementById('ttt-status').textContent = '';
+  renderBoard();
+}
+function makeMove(i) {
+  if (!tttActive || board[i]) return;
+  board[i] = currentPlayer;
+  renderBoard();
+  if (checkWin(currentPlayer)) {
+    document.getElementById('ttt-status').textContent = `${currentPlayer} wins!`;
+    highlightWinner(currentPlayer);
+    tttActive = false;
+    setTimeout(resetTTT, 2000);
+    return;
+  } else if (!board.includes('')) {
+    document.getElementById('ttt-status').textContent = `It's a draw!`;
+    tttActive = false;
+    setTimeout(resetTTT, 2000);
+    return;
+  }
+  currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+  if (currentPlayer === 'O') setTimeout(botMove, 500);
+}
+function botMove() {
+  const level = document.getElementById('botLevel').value;
+  let move = level === 'easy' ? randomBotMove() : smartBotMove();
+  if (move !== null) makeMove(move);
+}
+function randomBotMove() {
+  const empty = board.map((v, i) => v === '' ? i : null).filter(i => i !== null);
+  return empty.length ? empty[Math.floor(Math.random() * empty.length)] : null;
+}
+function smartBotMove() {
+  for (let i = 0; i < 9; i++) {
+    if (board[i] === '') {
+      board[i] = 'O';
+      if (checkWin('O')) { board[i] = ''; return i; }
+      board[i] = '';
+    }
+  }
+  for (let i = 0; i < 9; i++) {
+    if (board[i] === '') {
+      board[i] = 'X';
+      if (checkWin('X')) { board[i] = ''; return i; }
+      board[i] = '';
+    }
+  }
+  return randomBotMove();
+}
+function checkWin(p) {
+  const wins = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
+  return wins.some(combo => combo.every(i => board[i] === p));
+}
+function highlightWinner(p) {
+  const boardEl = document.getElementById('ttt-board').children;
+  const glowClass = p === 'X' ? 'glow-x' : 'glow-o';
+  board.forEach((val, i) => {
+    if (val === p) boardEl[i].classList.add(glowClass);
+  });
+}
+
+// Rotate ad
+let rotated = false;
+function rotateAd() {
+  const ad = document.getElementById('ad-container');
+  rotated = !rotated;
+  ad.style.transform = rotated ? 'rotate(-45deg)' : 'rotate(0)';
+  ad.style.transformOrigin = 'bottom right';
+}
+</script>
 </body>
-</html>
+</html><script type='text/javascript' src='//pl27099038.profitableratecpm.com/79/21/6e/79216ec1c3ffb65bd9f2cbe877bfcc43.js'></script>
